@@ -1,0 +1,24 @@
+- Worker node
+    - [ ] REST API to manage firecracker microVMs lifecycle
+    - [ ] Build microVMs image from container
+    - [ ] Basic networking connectivity
+    - [ ] Init binary
+    - [ ] Logs endpoint
+    - [ ] Exec endpoint
+    - [ ] Clean OCI image management
+    - [ ] Inter microVMs conenctivity ( cluster wide )
+    - [ ] Custom persistent drives
+    - [ ] Internal proxy / dns service
+- Supervisor node
+    - [ ] Replication of supervisor node
+    - Scheduler
+        - [ ] Schedule workload on multiple node
+        - [ ] Networking orchestration
+        - [ ] Internal proxy / dns service
+        - [ ] App Replication
+        - [ ] Node failure recovery
+    - Reverse proxy
+        - [ ] Automatic SSL
+        - [ ] Load balancing
+    - Misc
+        - [ ] Multi region cluster

@@ -1,0 +1,3 @@
+GET http://localhost:3000/api/v1/machines
+Content-Type: application/json
+Authorization: very secret password
