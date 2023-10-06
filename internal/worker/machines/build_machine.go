@@ -88,7 +88,7 @@ func (machineManager *MachineManager) buildInitDrive(machineSpec types.RavelMach
 		return nil, err
 	}
 
-	_, err = utils.Copy("./init", mountPath+"/ravel/init")
+	_, err = utils.Copy(os.Getenv("INIT_BINARY"), mountPath+"/ravel/init")
 	if err != nil {
 		log.Error("Failed to copy init binary", "err", err)
 		return nil, err

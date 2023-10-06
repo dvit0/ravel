@@ -1,1 +1,0 @@
-CGO_ENABLED=0 go build -o init cmd/init/main.go

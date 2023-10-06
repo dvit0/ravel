@@ -35,7 +35,7 @@ Authorization: {{apiKey}}
 ###
 # @name StopMachine
 # @prompt machineId
-POST {{baseUrl}}/machines/c6b7fsri3jjfb92tbdbf79kn/stop
+POST {{baseUrl}}/machines/{{machineId}}/stop
 Authorization: {{apiKey}}
 
 
