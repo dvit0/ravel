@@ -1,2 +1,0 @@
-POST  http://localhost:3000/api/v1/machines/kn06mdnmd6xb9x2tz6gk1qek/stop
-Authorization: very secret password

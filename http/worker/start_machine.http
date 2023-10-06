@@ -1,4 +1,0 @@
-POST http://localhost:3000/api/v1/machines/zfdye0t4dhaxlsfrfpezi6jn/stop
-Content-Type: application/json
-Authorization: very secret password
-
