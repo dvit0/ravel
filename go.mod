@@ -11,6 +11,19 @@ require (
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/valyentdev/firecracker-go-sdk v0.1.0
 	go.etcd.io/bbolt v1.3.7
+	google.golang.org/grpc v1.58.2
+	google.golang.org/protobuf v1.31.0
+)
+
+require (
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/hashicorp/go-hclog v0.14.1 // indirect
+	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
+	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
+	github.com/oklog/run v1.0.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 )
 
 require (
@@ -38,10 +51,10 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-openapi/validate v0.22.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-plugin v1.5.2
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -59,7 +72,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
+	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	go.mongodb.org/mongo-driver v1.10.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect

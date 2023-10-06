@@ -46,6 +46,7 @@ func (machinesManager *VMMManager) StartMachine(ctx context.Context, machineId s
 	}
 
 	err := machine.Start(ctx)
+
 	if err != nil {
 		return err
 	}
@@ -55,6 +56,7 @@ func (machinesManager *VMMManager) StartMachine(ctx context.Context, machineId s
 
 func (machineManager *VMMManager) StopMachine(ctx context.Context, machineId string) error {
 	machine, ok := machineManager.machines[machineId]
+	machine.StopVMM()
 	if !ok {
 		return errors.New("machine not found")
 	}

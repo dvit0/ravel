@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -17,14 +16,8 @@ func GetFormat(format Format) {
 
 func main() {
 
-	err := errors.New("machine not found")
-
-	defer func() {
-		if err != nil {
-			fmt.Println("Removing file")
-		}
-	}()
-
-	err = nil
+	for i := 0; i < 65536; i++ {
+	}
+	fmt.Println("hey")
 
 }

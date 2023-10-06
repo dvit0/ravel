@@ -1,82 +1,48 @@
 package machine_networking
 
 import (
-	"fmt"
-	"net"
-	"os/exec"
+	"github.com/charmbracelet/log"
+	"github.com/vishvananda/netlink"
 )
 
-var baseMacAddress net.HardwareAddr = []byte{0x02, 0xFC, 0x00, 0x00, 0x00, 0x00}
+// var baseMacAddress net.HardwareAddr = []byte{0xAA, 0xFC, 0x00, 0x00, 0x00, 0x01}
 
-func SetupNetworking(machineId string) error {
+/*
+sudo ip tuntap add tap0 mode tap
+sudo ip addr add 172.16.0.1/24 dev tap0
+sudo ip link set tap0 up
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i tap0 -o eth0 -j ACCEPT
+*/
 
-	tapDevice := "tap-" + machineId
-	bridge := "br-" + machineId
-
-	exec.Command("ip", "link", "del", tapDevice).Run()
-
-	// Create the bridge
-	if err := CreateBridge(bridge); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
+func SetupBaseMachineNetworking(machineId string) error {
+	// Create tap interface
+	tap := &netlink.Tuntap{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: "tap" + machineId,
+		},
+		Mode: netlink.TUNTAP_MODE_TAP,
 	}
 
-	// Create the tap device
-	if err := exec.Command("ip", "tuntap", "add", "dev", tapDevice, "mode", "tap").Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
+	if err := netlink.LinkAdd(tap); err != nil {
+		log.Error("Failed to create tap interface", "error", err)
+		return err
 	}
-	// Add the tap device to the bridge
-	if err := exec.Command("ip", "link", "set", tapDevice, "master", "firecracker0").Run(); err != nil {
-		return fmt.Errorf("failed adding tap device to bridge: %s", err)
-	}
-	if err := exec.Command("ip", "link", "set", tapDevice, "up").Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
-	}
-	if err := exec.Command("sysctl", "-w", fmt.Sprintf("net.ipv4.conf.%s.proxy_arp=1", tapDevice)).Run(); err != nil {
-		return fmt.Errorf("failed doing first sysctl: %s", err)
-	}
-	if err := exec.Command("sysctl", "-w", fmt.Sprintf("net.ipv6.conf.%s.disable_ipv6=1", tapDevice)).Run(); err != nil {
-		return fmt.Errorf("failed doing second sysctl: %s", err)
-	}
-	return nil
-}
 
-func CleanupNetworking(machineId string) error {
+	addr, _ := netlink.ParseAddr("172.16.0.1/24")
 
-	tapDevice := "tap-" + machineId
-
-	exec.Command("ip", "link", "del", tapDevice).Run()
-
-	return nil
-}
-
-func CreateBridge(bridgeName string) error {
-	// Create the bridge
-	if err := exec.Command("ip", "link", "add", bridgeName, "type", "bridge").Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
+	if err := netlink.AddrAdd(tap, addr); err != nil {
+		log.Error("Failed to assign IP address to tap interface", "error", err)
+		return err
 	}
-	return nil
-}
 
-func DeleteBridge(bridgeName string) error {
-	// Create the bridge
-	if err := exec.Command("ip", "link", "del", bridgeName).Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
+	if err := netlink.LinkSetUp(tap); err != nil {
+		log.Error("Failed to set tap interface up", "error", err)
+		return err
 	}
-	return nil
-}
 
-func CreateTapDevice(tapDevice string) error {
-	// Create the tap device
-	if err := exec.Command("ip", "tuntap", "add", "dev", tapDevice, "mode", "tap").Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
-	}
-	return nil
-}
+	// Setup NAT & iptables
 
-func DeleteTapDevice(tapDevice string) error {
-	// Create the tap device
-	if err := exec.Command("ip", "tuntap", "del", "dev", tapDevice, "mode", "tap").Run(); err != nil {
-		return fmt.Errorf("failed creating ip link: %s", err)
-	}
 	return nil
 }

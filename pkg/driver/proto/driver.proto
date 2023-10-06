@@ -1,0 +1,53 @@
+syntax = "proto3";
+package proto;
+option go_package = "github.com/valyentdev/ravel/pkg/driver/proto";
+
+service RavelDriver {
+    rpc StartVM(StartVMRequest) returns (Empty);
+    rpc StopVM(StopVMRequest) returns (Empty);
+}
+
+
+message Empty {}
+
+message StartVMRequest {
+    string vm_id = 1;
+    int64 vcpu_count = 2;
+    int64 memory = 3;
+    string init_file_system = 4;
+    string root_file_system = 5;
+    string kernel = 6;
+    string kernel_args = 7;
+    repeated Drive drives = 8;
+    repeated NetworkInterface network_interfaces = 9;
+}
+
+message StopVMRequest {
+    string vmId = 1;
+}
+
+message NetworkInterface {
+    string macAddress = 1;
+    string hostDevName = 2;
+    IPConfiguration ip_configuration = 3;
+}
+
+
+message IPConfiguration {
+    IPNet ip_addr = 1;
+    bytes gateway = 2;
+    repeated string nameservers = 3;
+    string ifName = 4;
+}
+
+message IPNet {
+    bytes ip = 1;
+    bytes mask = 2;
+}
+
+message Drive {
+    string drive_id = 1;
+    string drive_path_on_host = 2;
+    bool is_root = 3;
+    bool is_read_only = 4;
+}
