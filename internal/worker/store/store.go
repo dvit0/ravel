@@ -21,6 +21,11 @@ func initializeBuckets(db *bolt.DB) error {
 			return err
 		}
 
+		_, err = tx.CreateBucketIfNotExists([]byte("drivers"))
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 	)

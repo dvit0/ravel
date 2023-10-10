@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RavelDriverClient interface {
-	StartVM(ctx context.Context, in *StartVMRequest, opts ...grpc.CallOption) (*Empty, error)
+	StartVM(ctx context.Context, in *StartVMRequest, opts ...grpc.CallOption) (*StartVMResponse, error)
 	StopVM(ctx context.Context, in *StopVMRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
@@ -34,8 +34,8 @@ func NewRavelDriverClient(cc grpc.ClientConnInterface) RavelDriverClient {
 	return &ravelDriverClient{cc}
 }
 
-func (c *ravelDriverClient) StartVM(ctx context.Context, in *StartVMRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *ravelDriverClient) StartVM(ctx context.Context, in *StartVMRequest, opts ...grpc.CallOption) (*StartVMResponse, error) {
+	out := new(StartVMResponse)
 	err := c.cc.Invoke(ctx, "/proto.RavelDriver/StartVM", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (c *ravelDriverClient) StopVM(ctx context.Context, in *StopVMRequest, opts 
 // All implementations must embed UnimplementedRavelDriverServer
 // for forward compatibility
 type RavelDriverServer interface {
-	StartVM(context.Context, *StartVMRequest) (*Empty, error)
+	StartVM(context.Context, *StartVMRequest) (*StartVMResponse, error)
 	StopVM(context.Context, *StopVMRequest) (*Empty, error)
 	mustEmbedUnimplementedRavelDriverServer()
 }
@@ -65,7 +65,7 @@ type RavelDriverServer interface {
 type UnimplementedRavelDriverServer struct {
 }
 
-func (UnimplementedRavelDriverServer) StartVM(context.Context, *StartVMRequest) (*Empty, error) {
+func (UnimplementedRavelDriverServer) StartVM(context.Context, *StartVMRequest) (*StartVMResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartVM not implemented")
 }
 func (UnimplementedRavelDriverServer) StopVM(context.Context, *StopVMRequest) (*Empty, error) {

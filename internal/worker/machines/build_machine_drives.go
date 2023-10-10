@@ -11,55 +11,63 @@ import (
 	"github.com/valyentdev/ravel/internal/worker/drives"
 	"github.com/valyentdev/ravel/pkg/types"
 	"github.com/valyentdev/ravel/pkg/units"
+	"golang.org/x/sync/errgroup"
 )
 
-func (machineManager *MachineManager) buildMachine(machineSpec types.RavelMachineSpec) (types.RavelMachine, error) {
-	machineId := utils.NewId()
-
+func (machineManager *MachineManager) buildMachineDrives(machineSpec types.RavelMachineSpec) (initDriveId string, rootDriveId string, err error) {
 	log.Info("Pulling image", "image", machineSpec.Image)
-	err := machineManager.images.PullImage(machineSpec.Image)
+	err = machineManager.images.PullImage(machineSpec.Image)
 	if err != nil {
 		log.Error("Error pulling image", "error", err)
-		return types.RavelMachine{}, err
+		return "", "", err
 	}
 
 	log.Info("Inspecting image", "image", machineSpec.Image)
 	image, err := machineManager.images.GetImage(machineSpec.Image)
 	if err != nil {
 		log.Error("Error getting image", "error", err)
-		return types.RavelMachine{}, err
+		return "", "", err
 	}
 
 	log.Info("Getting image config", "image", machineSpec.Image)
 	imageInitConfig := image.GetInitImageConfig()
 
-	log.Info("Building init drive")
-	initDrive, err := machineManager.buildInitDrive(machineSpec, imageInitConfig)
-	if err != nil {
-		log.Error("Error building init drive", "error", err)
-		return types.RavelMachine{}, err
-	}
+	g := new(errgroup.Group)
+	var initDrive *drives.Drive
+	var mainDrive *drives.Drive
 
-	defer func() {
+	g.Go(func() error {
+		log.Info("Building init drive")
+		initDrive, err = machineManager.buildInitDrive(machineSpec, imageInitConfig)
 		if err != nil {
+			log.Error("Error building init drive", "error", err)
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		log.Info("Building main drive")
+		mainDrive, err = machineManager.buildMainDrive(machineSpec)
+		if err != nil {
+			log.Error("Error building main drive", "error", err)
+			return err
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Error("Error building drives", "error", err)
+		if initDrive != nil {
 			machineManager.drives.DeleteDrive(initDrive.Id)
 		}
-	}()
-
-	log.Info("Building main drive")
-	mainDrive, err := machineManager.buildMainDrive(machineSpec)
-	if err != nil {
-		log.Error("Error building main drive", "error", err)
-		return types.RavelMachine{}, err
+		if mainDrive != nil {
+			machineManager.drives.DeleteDrive(mainDrive.Id)
+		}
+		return "", "", err
 	}
 
-	return types.RavelMachine{
-		Id:               machineId,
-		RavelMachineSpec: &machineSpec,
-		InitDriveId:      initDrive.Id,
-		RootDriveId:      mainDrive.Id,
-		Status:           types.RavelMachineStatusCreated,
-	}, nil
+	return initDrive.Id, mainDrive.Id, nil
 }
 
 func (machineManager *MachineManager) buildInitDrive(machineSpec types.RavelMachineSpec, imageConfig initPkg.ImageConfig) (*drives.Drive, error) {

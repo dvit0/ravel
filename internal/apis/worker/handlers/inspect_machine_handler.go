@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"context"
+	"errors"
 	"net/http"
 
 	"github.com/alexedwards/flow"
@@ -16,11 +16,15 @@ func (h *Handler) GetMachineHandler(w http.ResponseWriter, r *http.Request) {
 		utils.AnswerWithInternalServerError(w, nil)
 		return
 	}
-	machine, err := h.worker.GetMachine(context.Background(), id)
-
+	machine, found, err := h.worker.GetMachine(id)
 	if err != nil {
 		log.Error("failed to get machine with error :", err)
-		utils.AnswerWithNotFoundError(w, err)
+		utils.AnswerWithInternalServerError(w, err)
+		return
+	}
+	if !found {
+		log.Error("machine not found")
+		utils.AnswerWithNotFoundError(w, errors.New("machine not found"))
 		return
 	}
 

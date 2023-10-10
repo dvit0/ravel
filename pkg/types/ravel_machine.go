@@ -17,8 +17,8 @@ type RavelMachine struct {
 type RavelMachineStatus string
 
 const (
-	RavelMachineStatusRunning RavelMachineStatus = "running"
-	RavelMachineStatusStopped RavelMachineStatus = "stopped"
-	RavelMachineStatusCreated RavelMachineStatus = "created"
-	RavelMachineStatusError   RavelMachineStatus = "error"
+	RavelMachineStatusStarting RavelMachineStatus = "starting"
+	RavelMachineStatusRunning  RavelMachineStatus = "running"
+	RavelMachineStatusStopped  RavelMachineStatus = "stopped"
+	RavelMachineStatusError    RavelMachineStatus = "error"
 )

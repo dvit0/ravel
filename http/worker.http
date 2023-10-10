@@ -17,11 +17,12 @@ Authorization: {{apiKey}}
 # @name GetMachine
 # @prompt machineId
 GET {{baseUrl}}/machines/{{machineId}}
+Authorization: {{apiKey}}
 
 
 ###
 # @name ListMachines
-GET {{baseUrl}}/api/v1/machines
+GET {{baseUrl}}/machines
 Authorization: {{apiKey}}
 
 
@@ -43,4 +44,9 @@ Authorization: {{apiKey}}
 # @name DeleteMachine
 # @prompt machineId
 DELETE {{baseUrl}}/machines/{{machineId}}
+Authorization: {{apiKey}}
+
+###
+# @name ExitWorker
+POST {{baseUrl}}/exit
 Authorization: {{apiKey}}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/alexedwards/flow"
@@ -18,7 +17,7 @@ func (h *Handler) StartMachineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.worker.StartMachine(context.Background(), id)
+	err := h.worker.StartMachine(id)
 
 	if err != nil {
 		log.Error("failed to create machine with error : ", err)

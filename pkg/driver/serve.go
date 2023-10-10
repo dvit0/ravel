@@ -1,16 +1,20 @@
 package driver
 
-import "github.com/hashicorp/go-plugin"
+import (
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+)
 
-func ServeRavelDriver(name string, driver RavelDriver) {
+func ServeRavelDriver(driver RavelDriver) {
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: plugin.HandshakeConfig{ // will be versioned later
-			MagicCookieKey:   "RAVEL_DRIVER_PLUGIN",
-			MagicCookieValue: "ravel-driver",
-		},
+		HandshakeConfig: Handshake,
 		Plugins: map[string]plugin.Plugin{
-			name: &RavelDriverGRPCPlugin{Impl: driver},
+			"RAVEL_DRIVER": &RavelDriverGRPCPlugin{Impl: driver},
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
+		Logger: hclog.New(&hclog.LoggerOptions{
+			Name:  "ravel-driver",
+			Level: hclog.LevelFromString("DEBUG"),
+		}),
 	})
 }

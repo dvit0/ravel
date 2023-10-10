@@ -64,7 +64,7 @@ func (drivesManager *DrivesManager) DeleteDrive(id string) error {
 		return err
 	}
 
-	err = os.RemoveAll(config.RAVEL_DRIVES_PATH + drive.Name)
+	err = os.RemoveAll(config.RAVEL_DRIVES_PATH + drive.Id)
 	if err != nil {
 		return err
 	}

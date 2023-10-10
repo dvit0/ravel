@@ -6,6 +6,7 @@ require (
 	github.com/alexedwards/flow v0.0.0-20220806114457-cf11be9e0e03
 	github.com/charmbracelet/log v0.2.4
 	github.com/docker/docker v24.0.5+incompatible
+	github.com/hashicorp/go-hclog v0.14.1
 	github.com/joho/godotenv v1.5.1
 	github.com/nrednav/cuid2 v0.0.0-20230619140044-8e0e65c97b31
 	github.com/opencontainers/image-spec v1.0.2
@@ -13,12 +14,12 @@ require (
 	go.etcd.io/bbolt v1.3.7
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
+
 )
 
 require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/hashicorp/go-hclog v0.14.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
@@ -33,6 +34,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.8.0 // indirect
+	github.com/containerd/console v1.0.3
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect
 	github.com/containernetworking/plugins v1.1.1 // indirect
@@ -78,6 +80,7 @@ require (
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sync v0.4.0
 	golang.org/x/sys v0.10.0
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

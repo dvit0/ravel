@@ -6,6 +6,5 @@ import (
 
 func main() {
 	firecrackerDriver := NewFirecrackerDriver()
-	defer firecrackerDriver.cleanup()
-	driver.ServeRavelDriver("firecracker", firecrackerDriver)
+	driver.ServeRavelDriver(firecrackerDriver)
 }

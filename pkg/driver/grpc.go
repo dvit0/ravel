@@ -8,9 +8,11 @@ import (
 
 type RavelDriverGRPCClient struct{ client proto.RavelDriverClient }
 
-func (m *RavelDriverGRPCClient) StartVM(vmId string, vmConfig VMConfig) error {
-	_, err := m.client.StartVM(context.Background(), vmConfig.ToProto())
-	return err
+func (m *RavelDriverGRPCClient) StartVM(vmId string, vmConfig VMConfig) (*proto.StartVMResponse, error) {
+	config := vmConfig.ToProto()
+	config.VmId = vmId
+
+	return m.client.StartVM(context.Background(), config)
 }
 
 func (m *RavelDriverGRPCClient) StopVM(vmId string) error {
@@ -31,8 +33,8 @@ type RavelDriverGRPCServer struct {
 
 func (m *RavelDriverGRPCServer) StartVM(
 	ctx context.Context,
-	req *proto.StartVMRequest) (*proto.Empty, error) {
-	return &proto.Empty{}, m.Impl.StartVM(req.VmId, VMConfigFromProto(req))
+	req *proto.StartVMRequest) (*proto.StartVMResponse, error) {
+	return m.Impl.StartVM(req.VmId, VMConfigFromProto(req))
 }
 
 func (m *RavelDriverGRPCServer) StopVM(

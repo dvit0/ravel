@@ -2,9 +2,9 @@ run-worker: build-drivers build-init
 	sudo go run cmd/worker/main.go
 
 build-drivers:
-	go build -o bin/drivers/firecracker-driver drivers/firecracker-driver/*.go
+	CGO_ENABLED=0 go build -o bin/drivers/firecracker-driver drivers/firecracker-driver/*.go
 build-init:
-	CGO_ENABLED=0 go build -o bin/init cmd/init/main.go
+	CGO_ENABLED=0 go build -o bin/init init/main.go
 
 driver-protoc:
 	protoc --go_out=. --go_opt=paths=source_relative \

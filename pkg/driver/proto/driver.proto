@@ -3,7 +3,7 @@ package proto;
 option go_package = "github.com/valyentdev/ravel/pkg/driver/proto";
 
 service RavelDriver {
-    rpc StartVM(StartVMRequest) returns (Empty);
+    rpc StartVM(StartVMRequest) returns (StartVMResponse);
     rpc StopVM(StopVMRequest) returns (Empty);
 }
 
@@ -20,6 +20,11 @@ message StartVMRequest {
     string kernel_args = 7;
     repeated Drive drives = 8;
     repeated NetworkInterface network_interfaces = 9;
+}
+
+message StartVMResponse {
+    string pid = 2;
+    string serial = 3;
 }
 
 message StopVMRequest {

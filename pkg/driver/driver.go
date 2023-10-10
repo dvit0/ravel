@@ -9,12 +9,13 @@ import (
 	"github.com/valyentdev/ravel/pkg/driver/proto"
 )
 
-var PluginMap = map[string]plugin.Plugin{
-	"driver": &RavelDriverGRPCPlugin{},
+var Handshake = plugin.HandshakeConfig{ // Will be versioned later
+	MagicCookieKey:   "RAVEL_DRIVER_PLUGIN",
+	MagicCookieValue: "ravel-driver",
 }
 
 type RavelDriver interface {
-	StartVM(vmId string, vmConfig VMConfig) error
+	StartVM(vmId string, vmConfig VMConfig) (*proto.StartVMResponse, error)
 	StopVM(vmId string) error
 }
 

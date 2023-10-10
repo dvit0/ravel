@@ -72,6 +72,7 @@ func (image *Image) Unpack(ctx context.Context, dest string) error {
 	if err != nil {
 		return err
 	}
+	defer os.Remove(archivePath)
 	defer archive.Close()
 
 	_, err = io.Copy(archive, readClose)

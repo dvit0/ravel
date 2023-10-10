@@ -12,15 +12,7 @@ import (
 func (h *Handler) DeleteMachineHandler(w http.ResponseWriter, r *http.Request) {
 	id := flow.Param(r.Context(), "id")
 
-	_, err := h.worker.GetMachine(context.Background(), id)
-
-	if err != nil {
-		log.Error("failed to get machine with error : ", err)
-		utils.AnswerWithNotFoundError(w, err)
-		return
-	}
-
-	err = h.worker.DeleteMachine(context.Background(), id)
+	err := h.worker.DeleteMachine(context.Background(), id)
 
 	if err != nil {
 		log.Error("failed to delete machine with error :", err)

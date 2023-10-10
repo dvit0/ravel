@@ -30,23 +30,27 @@ func (store *Store) StoreRavelMachine(ravelMachine *types.RavelMachine) error {
 	return nil
 }
 
-func (store *Store) GetRavelMachine(id string) (types.RavelMachine, error) {
+func (store *Store) GetRavelMachine(id string) (*types.RavelMachine, bool, error) {
 	var ravelMachine types.RavelMachine
-
+	found := false
 	err := store.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("machines"))
 
 		ravelMachineBytes := bucket.Get([]byte(id))
+		if ravelMachineBytes == nil {
+			return nil
+		}
+		found = true
 
 		json.Unmarshal(ravelMachineBytes, &ravelMachine)
 
 		return nil
 	})
 	if err != nil {
-		return ravelMachine, err
+		return nil, false, err
 	}
 
-	return ravelMachine, nil
+	return &ravelMachine, found, nil
 }
 
 func (store *Store) ListRavelMachines() ([]types.RavelMachine, error) {
@@ -84,12 +88,15 @@ func (store *Store) ListRavelMachines() ([]types.RavelMachine, error) {
 }
 
 func (store *Store) UpdateRavelMachine(id string, updateRavelMachine func(*types.RavelMachine)) error {
-	ravelMachine, err := store.GetRavelMachine(id)
+	ravelMachine, found, err := store.GetRavelMachine(id)
 	if err != nil {
 		return err
 	}
+	if !found {
+		return errors.New("machine not found")
+	}
 
-	updateRavelMachine(&ravelMachine)
+	updateRavelMachine(ravelMachine)
 
 	err = store.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("machines"))
