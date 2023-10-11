@@ -1,24 +1,15 @@
 package types
 
-type RavelMachineSpec struct {
-	Image  string `json:"image"`
-	VCpus  int64  `json:"vcpus"`
-	Memory int64  `json:"memory"`
-}
+import api "github.com/valyentdev/ravel/pkg/api/worker"
 
-type RavelMachine struct {
-	*RavelMachineSpec
-	Id          string             `json:"id"`
-	InitDriveId string             `json:"init_drive_id"`
-	RootDriveId string             `json:"root_drive_id"`
-	Status      RavelMachineStatus `json:"status"`
-}
+type RavelMachineSpec = api.RavelMachineSpec
+type RavelMachine = api.RavelMachine
 
-type RavelMachineStatus string
+type RavelMachineStatus = api.RavelMachineStatus
 
 const (
-	RavelMachineStatusStarting RavelMachineStatus = "starting"
-	RavelMachineStatusRunning  RavelMachineStatus = "running"
-	RavelMachineStatusStopped  RavelMachineStatus = "stopped"
-	RavelMachineStatusError    RavelMachineStatus = "error"
+	RavelMachineStatusStarting RavelMachineStatus = RavelMachineStatus(api.Starting)
+	RavelMachineStatusRunning  RavelMachineStatus = RavelMachineStatus(api.Running)
+	RavelMachineStatusStopped  RavelMachineStatus = RavelMachineStatus(api.Stopped)
+	RavelMachineStatusError    RavelMachineStatus = RavelMachineStatus(api.Error)
 )

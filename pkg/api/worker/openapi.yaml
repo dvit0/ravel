@@ -1,0 +1,217 @@
+openapi: "3.0.0"
+info:
+  title: Machines API
+  version: "1.0"
+servers:
+  - url: http://localhost:3000
+    description: Local server
+paths:
+  /api/v1/machines:
+    post:
+      summary: Create a machine
+      operationId: CreateMachine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RavelMachineSpec'
+      responses:
+        '201':
+          description: Machine created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  machineId:
+                    type: string
+                example:
+                  machineId: "jfhvje"
+
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List all machines
+      operationId: ListMachines
+      responses:
+        '200':
+          description: A list of machines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  machines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RavelMachine'
+
+  /api/v1/machines/{id}:
+    get:
+      summary: Get a specific machine by its ID
+      operationId: GetMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed information about the machine
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RavelMachine'
+        '404':
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a machine by its ID
+      operationId: DeleteMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Machine deleted successfully
+        '404':
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/machines/{id}/start:
+    post:
+      summary: Start a machine by its ID
+      operationId: StartMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Machine started successfully
+        '404':
+          description: Machine not found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/machines/{id}/stop:
+    post:
+      summary: Stop a machine by its ID
+      operationId: StopMachine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Machine stopped successfully
+        '404':
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        
+
+  /api/v1/exit:
+    post:
+      summary: Exit worker
+      operationId: ExitWorker
+      responses:
+        '200':
+          description: Success
+
+components:
+  schemas:
+    RavelMachineSpec:
+      type: object
+      properties:
+        image:
+          type: string
+          description: Image used by the machine
+        vcpus:
+          type: integer
+          format: int64
+          description: Number of virtual CPUs
+        memory:
+          type: integer
+          format: int64
+          description: Memory size in MB
+      required:
+        - image
+        - vcpus
+        - memory
+
+    RavelMachine:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Machine unique identifier
+        init_drive_id:
+          type: string
+          description: Initial drive identifier for the machine
+        root_drive_id:
+          type: string
+          description: Root drive identifier for the machine
+        status:
+          $ref: '#/components/schemas/RavelMachineStatus'
+        spec:
+          $ref: '#/components/schemas/RavelMachineSpec'
+      required:
+        - id
+        - init_drive_id
+        - root_drive_id
+        - status
+        - spec
+
+    RavelMachineStatus:
+      type: string
+      enum:
+        - "starting"
+        - "running"
+        - "stopped"
+        - "error"
+      description: Status of the machine
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: x-api-key
+      in: header

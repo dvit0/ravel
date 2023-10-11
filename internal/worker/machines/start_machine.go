@@ -30,7 +30,7 @@ func (machineManager *MachineManager) StartMachine(machineId string) error {
 		return err
 	}
 
-	initDriveId, rootDriveId, err := machineManager.buildMachineDrives(*machine.RavelMachineSpec)
+	initDriveId, rootDriveId, err := machineManager.buildMachineDrives(machine.Spec)
 	if err != nil {
 		machineManager.store.UpdateRavelMachine(machineId, func(m *types.RavelMachine) {
 			m.Status = types.RavelMachineStatusError

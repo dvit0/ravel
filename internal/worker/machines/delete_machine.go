@@ -1,14 +1,13 @@
 package machines
 
 import (
-	"context"
 	"errors"
 
 	"github.com/charmbracelet/log"
 	"github.com/valyentdev/ravel/pkg/types"
 )
 
-func (machineManager *MachineManager) DeleteMachine(ctx context.Context, machineId string) error {
+func (machineManager *MachineManager) DeleteMachine(machineId string) error {
 	machine, found, err := machineManager.store.GetRavelMachine(machineId)
 	if err != nil {
 		log.Error("Error getting firecracker machine", "error", err)
