@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"time"
 
@@ -14,12 +15,15 @@ import (
 
 type WorkerServer struct {
 	worker *worker.Worker
+	server *http.Server
 }
 
 func StartWorkerApi(worker *worker.Worker) {
-	handler := apigen.NewStrictHandler(&WorkerServer{
+	workerServer := &WorkerServer{
 		worker: worker,
-	}, nil)
+	}
+
+	handler := apigen.NewStrictHandler(workerServer, nil)
 	e := echo.New()
 
 	e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
@@ -33,8 +37,9 @@ func StartWorkerApi(worker *worker.Worker) {
 
 	apigen.RegisterHandlers(e, handler)
 
-	log.Info("Ravel worker api start listening on", "port", e.Server.Addr)
+	workerServer.server = e.Server
 
+	log.Info("Ravel worker api start listening on", "port", e.Server.Addr)
 	e.Server.ListenAndServe()
 }
 
@@ -45,8 +50,10 @@ func strptr(s string) *string {
 func (s *WorkerServer) ExitWorker(ctx context.Context, request apigen.ExitWorkerRequestObject) (apigen.ExitWorkerResponseObject, error) {
 	defer func() {
 		time.Sleep(1 * time.Second)
-		os.Exit(0)
+		s.server.Shutdown(context.Background())
 	}()
+
+	s.worker.Cleanup()
 
 	return nil, nil
 }
@@ -120,6 +127,10 @@ func (s *WorkerServer) StartMachine(ctx context.Context, request apigen.StartMac
 		return apigen.StartMachine404JSONResponse{
 			Message: strptr("Machine not found"),
 		}, nil
+	}
+
+	if machine.Status == apigen.Running {
+		return apigen.StartMachine200Response{}, nil
 	}
 
 	err = s.worker.StartMachine(machine.Id)

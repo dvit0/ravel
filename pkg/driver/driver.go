@@ -9,7 +9,8 @@ import (
 	"github.com/valyentdev/ravel/pkg/driver/proto"
 )
 
-var Handshake = plugin.HandshakeConfig{ // Will be versioned later
+var Handshake = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
 	MagicCookieKey:   "RAVEL_DRIVER_PLUGIN",
 	MagicCookieValue: "ravel-driver",
 }

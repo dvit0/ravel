@@ -16,5 +16,12 @@ func main() {
 	}
 
 	worker := worker.NewWorker()
+
+	log.Info("Recovering machines...")
+	err := worker.MachineManager.Recover()
+	if err != nil {
+		log.Error("Error recovering machines", "error", err)
+	}
+
 	api.StartWorkerApi(worker)
 }

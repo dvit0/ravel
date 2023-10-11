@@ -19,9 +19,7 @@ func (machineManager *MachineManager) StartMachine(machineId string) error {
 	if !found {
 		return errors.New("machine not found")
 	}
-	if machine.Status == types.RavelMachineStatusRunning {
-		return errors.New("machine is not stopped")
-	}
+
 	err = machineManager.store.UpdateRavelMachine(machineId, func(m *types.RavelMachine) {
 		m.Status = types.RavelMachineStatusStarting
 	})
@@ -57,6 +55,9 @@ func (machineManager *MachineManager) StartMachine(machineId string) error {
 
 	_, err = driver.StartVM(machineId, getVMConfig(machine))
 	if err != nil {
+		machineManager.store.UpdateRavelMachine(machineId, func(m *types.RavelMachine) {
+			m.Status = types.RavelMachineStatusError
+		})
 		return errors.New("error starting VM")
 	}
 

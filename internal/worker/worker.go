@@ -33,8 +33,9 @@ func NewWorker() *Worker {
 
 func (worker *Worker) Cleanup() {
 	err := worker.store.CloseStore()
-
 	if err != nil {
 		log.Error("Error closing store", "error", err)
 	}
+
+	worker.MachineManager.Cleanup()
 }

@@ -23,3 +23,7 @@ func NewMachineManager(store *store.Store, docker *docker.Docker) *MachineManage
 		images:         images.NewImagesManager(),
 	}
 }
+
+func (machineManager *MachineManager) Cleanup() {
+	machineManager.driversManager.Cleanup()
+}

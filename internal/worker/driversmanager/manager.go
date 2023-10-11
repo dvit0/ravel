@@ -105,9 +105,15 @@ func newDriverClient(driverName string, reattachConfig *plugin.ReattachConfig) *
 	if reattachConfig != nil {
 		clientConfig.Reattach = reattachConfig
 	} else {
-		clientConfig.Cmd = exec.Command("sh", "-c", "./bin/drivers/"+driverName)
+		clientConfig.Cmd = exec.Command("./bin/drivers/" + driverName)
 	}
 	client := plugin.NewClient(clientConfig)
-
 	return client
+}
+
+func (driversManager *DriversManager) Cleanup() {
+	log.Info("Cleaning up drivers")
+	for _, client := range driversManager.clients {
+		client.Kill()
+	}
 }

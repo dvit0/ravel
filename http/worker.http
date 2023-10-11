@@ -5,7 +5,7 @@
 # @name CreateMachine
 POST {{baseUrl}}/machines HTTP/1.1
 Content-Type: application/json
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 {
 	"image": "nginx",
@@ -17,36 +17,36 @@ Authorization: {{apiKey}}
 # @name GetMachine
 # @prompt machineId
 GET {{baseUrl}}/machines/{{machineId}}
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 
 ###
 # @name ListMachines
 GET {{baseUrl}}/machines
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 
 ###
 # @name StartMachine
 # @prompt machineId
 POST  {{baseUrl}}/machines/{{machineId}}/start
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 
 ###
 # @name StopMachine
 # @prompt machineId
 POST {{baseUrl}}/machines/{{machineId}}/stop
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 
 ###
 # @name DeleteMachine
 # @prompt machineId
 DELETE {{baseUrl}}/machines/{{machineId}}
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
 
 ###
 # @name ExitWorker
 POST {{baseUrl}}/exit
-Authorization: {{apiKey}}
+x-api-key: {{apiKey}}
