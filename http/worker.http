@@ -21,6 +21,12 @@ x-api-key: {{apiKey}}
 
 
 ###
+# @name GetMachineLogs
+# @prompt machineId
+GET {{baseUrl}}/machines/{{machineId}}/logs
+x-api-key: {{apiKey}}
+
+###
 # @name ListMachines
 GET {{baseUrl}}/machines
 x-api-key: {{apiKey}}

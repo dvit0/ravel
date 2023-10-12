@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	api "github.com/valyentdev/ravel/pkg/api/worker"
@@ -12,9 +13,8 @@ import (
 func newErrorFromResponse(body []byte) error {
 
 	var errorResponse api.ErrorResponse
-
 	err := json.Unmarshal(body, &errorResponse)
-	if err != nil && len(*errorResponse.Message) == 0 {
+	if err != nil || errorResponse.Message == nil {
 		return errors.New("unknown error")
 	}
 
@@ -123,7 +123,7 @@ func (c *WorkerClient) StartMachine(ctx context.Context, machineId string) error
 		return authError()
 	}
 
-	if res.StatusCode() != 200 {
+	if res.StatusCode() != 204 {
 		return newErrorFromResponse(res.Body)
 	}
 
@@ -140,9 +140,28 @@ func (c *WorkerClient) StopMachine(ctx context.Context, machineId string) error 
 		return authError()
 	}
 
-	if res.StatusCode() != 200 {
+	if res.StatusCode() != 204 {
 		return newErrorFromResponse(res.Body)
 	}
 
 	return nil
+}
+
+func (c *WorkerClient) GetStreamedLogs(ctx context.Context, machineId string) {
+	res, err := c.client.GetMachineLogs(context.Background(), machineId)
+	if err != nil {
+		return
+	}
+
+	reader := res.Body
+
+	for {
+		buf := make([]byte, 1024)
+		n, err := reader.Read(buf)
+		if err != nil {
+			return
+		}
+		fmt.Println(string(buf[:n]))
+	}
+
 }

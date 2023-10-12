@@ -142,8 +142,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        
-
+  /api/v1/machines/{id}/logs:
+    get:
+      summary: Get logs for a machine by its ID
+      operationId: GetMachineLogs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Machine ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Logs for the machine
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '404':
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/exit:
     post:
       summary: Exit worker

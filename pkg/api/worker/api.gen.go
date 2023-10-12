@@ -19,7 +19,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
-	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 )
 
 // Defines values for RavelMachineStatus.
@@ -159,6 +158,9 @@ type ClientInterface interface {
 	// GetMachine request
 	GetMachine(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetMachineLogs request
+	GetMachineLogs(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// StartMachine request
 	StartMachine(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -228,6 +230,18 @@ func (c *Client) DeleteMachine(ctx context.Context, id string, reqEditors ...Req
 
 func (c *Client) GetMachine(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMachineRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetMachineLogs(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMachineLogsRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -424,6 +438,40 @@ func NewGetMachineRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetMachineLogsRequest generates requests for GetMachineLogs
+func NewGetMachineLogsRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/machines/%s/logs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewStartMachineRequest generates requests for StartMachine
 func NewStartMachineRequest(server string, id string) (*http.Request, error) {
 	var err error
@@ -552,6 +600,9 @@ type ClientWithResponsesInterface interface {
 	// GetMachineWithResponse request
 	GetMachineWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetMachineResponse, error)
 
+	// GetMachineLogsWithResponse request
+	GetMachineLogsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetMachineLogsResponse, error)
+
 	// StartMachineWithResponse request
 	StartMachineWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*StartMachineResponse, error)
 
@@ -674,6 +725,28 @@ func (r GetMachineResponse) StatusCode() int {
 	return 0
 }
 
+type GetMachineLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON404      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMachineLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMachineLogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type StartMachineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -770,6 +843,15 @@ func (c *ClientWithResponses) GetMachineWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetMachineResponse(rsp)
+}
+
+// GetMachineLogsWithResponse request returning *GetMachineLogsResponse
+func (c *ClientWithResponses) GetMachineLogsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetMachineLogsResponse, error) {
+	rsp, err := c.GetMachineLogs(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMachineLogsResponse(rsp)
 }
 
 // StartMachineWithResponse request returning *StartMachineResponse
@@ -928,6 +1010,32 @@ func ParseGetMachineResponse(rsp *http.Response) (*GetMachineResponse, error) {
 	return response, nil
 }
 
+// ParseGetMachineLogsResponse parses an HTTP response from a GetMachineLogsWithResponse call
+func ParseGetMachineLogsResponse(rsp *http.Response) (*GetMachineLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMachineLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseStartMachineResponse parses an HTTP response from a StartMachineWithResponse call
 func ParseStartMachineResponse(rsp *http.Response) (*StartMachineResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -1004,6 +1112,9 @@ type ServerInterface interface {
 	// Get a specific machine by its ID
 	// (GET /api/v1/machines/{id})
 	GetMachine(ctx echo.Context, id string) error
+	// Get logs for a machine by its ID
+	// (GET /api/v1/machines/{id}/logs)
+	GetMachineLogs(ctx echo.Context, id string) error
 	// Start a machine by its ID
 	// (POST /api/v1/machines/{id}/start)
 	StartMachine(ctx echo.Context, id string) error
@@ -1076,6 +1187,22 @@ func (w *ServerInterfaceWrapper) GetMachine(ctx echo.Context) error {
 	return err
 }
 
+// GetMachineLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) GetMachineLogs(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetMachineLogs(ctx, id)
+	return err
+}
+
 // StartMachine converts echo context to params.
 func (w *ServerInterfaceWrapper) StartMachine(ctx echo.Context) error {
 	var err error
@@ -1141,413 +1268,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/v1/machines", wrapper.CreateMachine)
 	router.DELETE(baseURL+"/api/v1/machines/:id", wrapper.DeleteMachine)
 	router.GET(baseURL+"/api/v1/machines/:id", wrapper.GetMachine)
+	router.GET(baseURL+"/api/v1/machines/:id/logs", wrapper.GetMachineLogs)
 	router.POST(baseURL+"/api/v1/machines/:id/start", wrapper.StartMachine)
 	router.POST(baseURL+"/api/v1/machines/:id/stop", wrapper.StopMachine)
 
 }
 
-type ExitWorkerRequestObject struct {
-}
-
-type ExitWorkerResponseObject interface {
-	VisitExitWorkerResponse(w http.ResponseWriter) error
-}
-
-type ExitWorker200Response struct {
-}
-
-func (response ExitWorker200Response) VisitExitWorkerResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
-	return nil
-}
-
-type ListMachinesRequestObject struct {
-}
-
-type ListMachinesResponseObject interface {
-	VisitListMachinesResponse(w http.ResponseWriter) error
-}
-
-type ListMachines200JSONResponse struct {
-	Machines *[]RavelMachine `json:"machines,omitempty"`
-}
-
-func (response ListMachines200JSONResponse) VisitListMachinesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateMachineRequestObject struct {
-	Body *CreateMachineJSONRequestBody
-}
-
-type CreateMachineResponseObject interface {
-	VisitCreateMachineResponse(w http.ResponseWriter) error
-}
-
-type CreateMachine201JSONResponse struct {
-	MachineId *string `json:"machineId,omitempty"`
-}
-
-func (response CreateMachine201JSONResponse) VisitCreateMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateMachine400JSONResponse ErrorResponse
-
-func (response CreateMachine400JSONResponse) VisitCreateMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteMachineRequestObject struct {
-	Id string `json:"id"`
-}
-
-type DeleteMachineResponseObject interface {
-	VisitDeleteMachineResponse(w http.ResponseWriter) error
-}
-
-type DeleteMachine204Response struct {
-}
-
-func (response DeleteMachine204Response) VisitDeleteMachineResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
-	return nil
-}
-
-type DeleteMachine404JSONResponse ErrorResponse
-
-func (response DeleteMachine404JSONResponse) VisitDeleteMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMachineRequestObject struct {
-	Id string `json:"id"`
-}
-
-type GetMachineResponseObject interface {
-	VisitGetMachineResponse(w http.ResponseWriter) error
-}
-
-type GetMachine200JSONResponse RavelMachine
-
-func (response GetMachine200JSONResponse) VisitGetMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMachine404JSONResponse ErrorResponse
-
-func (response GetMachine404JSONResponse) VisitGetMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type StartMachineRequestObject struct {
-	Id string `json:"id"`
-}
-
-type StartMachineResponseObject interface {
-	VisitStartMachineResponse(w http.ResponseWriter) error
-}
-
-type StartMachine200Response struct {
-}
-
-func (response StartMachine200Response) VisitStartMachineResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
-	return nil
-}
-
-type StartMachine404JSONResponse ErrorResponse
-
-func (response StartMachine404JSONResponse) VisitStartMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type StopMachineRequestObject struct {
-	Id string `json:"id"`
-}
-
-type StopMachineResponseObject interface {
-	VisitStopMachineResponse(w http.ResponseWriter) error
-}
-
-type StopMachine200Response struct {
-}
-
-func (response StopMachine200Response) VisitStopMachineResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
-	return nil
-}
-
-type StopMachine400JSONResponse ErrorResponse
-
-func (response StopMachine400JSONResponse) VisitStopMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type StopMachine404JSONResponse ErrorResponse
-
-func (response StopMachine404JSONResponse) VisitStopMachineResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-// StrictServerInterface represents all server handlers.
-type StrictServerInterface interface {
-	// Exit worker
-	// (POST /api/v1/exit)
-	ExitWorker(ctx context.Context, request ExitWorkerRequestObject) (ExitWorkerResponseObject, error)
-	// List all machines
-	// (GET /api/v1/machines)
-	ListMachines(ctx context.Context, request ListMachinesRequestObject) (ListMachinesResponseObject, error)
-	// Create a machine
-	// (POST /api/v1/machines)
-	CreateMachine(ctx context.Context, request CreateMachineRequestObject) (CreateMachineResponseObject, error)
-	// Delete a machine by its ID
-	// (DELETE /api/v1/machines/{id})
-	DeleteMachine(ctx context.Context, request DeleteMachineRequestObject) (DeleteMachineResponseObject, error)
-	// Get a specific machine by its ID
-	// (GET /api/v1/machines/{id})
-	GetMachine(ctx context.Context, request GetMachineRequestObject) (GetMachineResponseObject, error)
-	// Start a machine by its ID
-	// (POST /api/v1/machines/{id}/start)
-	StartMachine(ctx context.Context, request StartMachineRequestObject) (StartMachineResponseObject, error)
-	// Stop a machine by its ID
-	// (POST /api/v1/machines/{id}/stop)
-	StopMachine(ctx context.Context, request StopMachineRequestObject) (StopMachineResponseObject, error)
-}
-
-type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = strictecho.StrictEchoMiddlewareFunc
-
-func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
-}
-
-type strictHandler struct {
-	ssi         StrictServerInterface
-	middlewares []StrictMiddlewareFunc
-}
-
-// ExitWorker operation middleware
-func (sh *strictHandler) ExitWorker(ctx echo.Context) error {
-	var request ExitWorkerRequestObject
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ExitWorker(ctx.Request().Context(), request.(ExitWorkerRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ExitWorker")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(ExitWorkerResponseObject); ok {
-		return validResponse.VisitExitWorkerResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// ListMachines operation middleware
-func (sh *strictHandler) ListMachines(ctx echo.Context) error {
-	var request ListMachinesRequestObject
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ListMachines(ctx.Request().Context(), request.(ListMachinesRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListMachines")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(ListMachinesResponseObject); ok {
-		return validResponse.VisitListMachinesResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// CreateMachine operation middleware
-func (sh *strictHandler) CreateMachine(ctx echo.Context) error {
-	var request CreateMachineRequestObject
-
-	var body CreateMachineJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
-		return err
-	}
-	request.Body = &body
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.CreateMachine(ctx.Request().Context(), request.(CreateMachineRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreateMachine")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(CreateMachineResponseObject); ok {
-		return validResponse.VisitCreateMachineResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// DeleteMachine operation middleware
-func (sh *strictHandler) DeleteMachine(ctx echo.Context, id string) error {
-	var request DeleteMachineRequestObject
-
-	request.Id = id
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteMachine(ctx.Request().Context(), request.(DeleteMachineRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteMachine")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(DeleteMachineResponseObject); ok {
-		return validResponse.VisitDeleteMachineResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// GetMachine operation middleware
-func (sh *strictHandler) GetMachine(ctx echo.Context, id string) error {
-	var request GetMachineRequestObject
-
-	request.Id = id
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetMachine(ctx.Request().Context(), request.(GetMachineRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetMachine")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetMachineResponseObject); ok {
-		return validResponse.VisitGetMachineResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// StartMachine operation middleware
-func (sh *strictHandler) StartMachine(ctx echo.Context, id string) error {
-	var request StartMachineRequestObject
-
-	request.Id = id
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.StartMachine(ctx.Request().Context(), request.(StartMachineRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "StartMachine")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(StartMachineResponseObject); ok {
-		return validResponse.VisitStartMachineResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// StopMachine operation middleware
-func (sh *strictHandler) StopMachine(ctx echo.Context, id string) error {
-	var request StopMachineRequestObject
-
-	request.Id = id
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.StopMachine(ctx.Request().Context(), request.(StopMachineRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "StopMachine")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(StopMachineResponseObject); ok {
-		return validResponse.VisitStopMachineResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RWTW/cNhP+KwTfF+hFsdaN0YNudhwEi8ZFYKPoITACWhp5x5FIhhxuvTH034sh91Pm",
-	"2tkCLbYXe0GK8/E888zMk6xNb40GTV5WT9LXM+hV/PneOeOuwVujPfCBdcaCI4R43YP36j5e0MKCrKQn",
-	"h/peDkOxOjF3D1CTHAp5rebQXal6hjpjCxv+24CvHVpCo2Ullx+LoPFbAIENaMIWwcli7LCQqJG+NA7n",
-	"8CVna6qRUHUifrFlSrTGCZqB6JeRZUw7Y14yfW0M/S273kLN5v7voJWV/F+5IaJcslBuo3bD3/M7UhT8",
-	"QS/TC+bFwbeADhpZfWbQx8CNs117W4Z7+wqzN8ucRuz2yzoZkcLHInhoxN3iNbR66I1bZKoknguP30Gg",
-	"FlcXspCtcb0iWUnU9MvZxhpqgntwbG5e24ThrrXfQn8HTphWzNFRUJ149+l3/yMmx9jGlFd+1uG/it+a",
-	"29240jnHtQsT6NCzO0/KESNVSBe0Tr88GWuBSQRW8pbzLaF6qINDWtxw3SS6zgPNjMPvKjl/ksghzEA1",
-	"UXta9Wzj8Y2y+OYrLDZgKIu/wkIOQxRka2JrQOpgo2Yvzj9NGRdwPqV2ejJhFIwFrSzKSr49mZxMZCGt",
-	"olmMp1QWy/lpCY9IsbiMj/+5xGKM00ZW8v0j0h/GfY0xumXXiu9/nkwyiIa6Bp9E4UPfKy6uaET8mazw",
-	"zcr1EvFo7h4y3j+ip1WKe/zXRhPo+FZZ22EdX5cPPoGchJtps1uukaA/SPly04qVc2qR6818tIvNuejQ",
-	"E1fb2vkuTJytUF23dV/soeWdA0Vwta5YFgl4ujDN4iBQDuuSQ9LjDgmnB/mDR9XbDrYYiOk8tLP5Q4Q1",
-	"y9K0+aFx+Bzy1bCrI1yN8Kk829B1C/Z2dmANvQTX7lzPBHOhGrHkaUR8YlOodQvKiaR8wmZIiuuA4HlN",
-	"XMbzTU1Y5VQPBM7L6vO+NWB6GaeVrGJj2PShNLXWrZdcgGILiDEXt8/q4mz/6pESyLFx9u+xsQpGGxKt",
-	"CboZcZLQ3HDCwxTJM2BDke9WH4COBf3JP9IFcjheAinsoBE8mniao9FC3ZlAO0P12Oj9ACSU4O0LW6xz",
-	"JO+TYBm3gv0T84avj6oO8j5jGkenwp9GPEU08yp8gSBjX+LH2P8EPXHNPKKRdWQKZh73FEZcwN08T+pH",
-	"U6tOpHtZyOA6XsOJbFWWHd/NjKfq7WQykcPt8FcAAAD//1vqvNXJDwAA",
+	"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",
+	"mxpPxbvRaCS7x+6vAAAA//+tIuEbpREAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

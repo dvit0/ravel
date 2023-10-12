@@ -14,6 +14,9 @@ const (
 	RAVEL_TEMP_BASE_PATH = "/tmp/ravel"
 	RAVEL_TEMP_ARCHIVES  = RAVEL_TEMP_BASE_PATH + "/archives"
 	RAVEL_FOLDERS_PERM   = 0644
+
+	RAVEL_LOGS_PATH          = "/var/log/ravel"
+	RAVEL_MACHINES_LOGS_PATH = RAVEL_LOGS_PATH + "/machines"
 )
 
 const errorMessage = "Please check that you run the worker as root."
@@ -44,6 +47,17 @@ func InitRavelDirectories() {
 	if err != nil && !os.IsExist(err) {
 		log.Fatal(errorMessage, "error", err)
 	}
+
+	err = os.Mkdir(RAVEL_LOGS_PATH, os.FileMode(RAVEL_FOLDERS_PERM))
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(errorMessage, "error", err)
+	}
+
+	err = os.Mkdir(RAVEL_MACHINES_LOGS_PATH, os.FileMode(RAVEL_FOLDERS_PERM))
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(errorMessage, "error", err)
+	}
+
 }
 
 func GetMachineSocketPath(machineId string) string {

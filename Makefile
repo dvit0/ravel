@@ -13,3 +13,5 @@ driver-protoc:
 
 oapi-generate:
 	oapi-codegen --config worker.oapi-codegen.yaml ./pkg/api/worker/openapi.yaml
+build-cli:
+	go build -o ./ravel cmd/ravel/main.go

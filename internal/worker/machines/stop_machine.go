@@ -28,6 +28,7 @@ func (machineManager *MachineManager) StopMachine(machineId string) error {
 		log.Error("Error getting driver", "error", err)
 		return errors.New("error getting driver")
 	}
+	machineManager.LogsManager.RemoveLogBroadcaster(machineId)
 
 	err = driver.StopVM(machineId)
 	if err != nil {

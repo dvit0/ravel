@@ -1,12 +1,12 @@
-package logger
+package logsmanager
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/valyentdev/ravel/internal/utils"
 )
 
@@ -27,7 +27,7 @@ type RotateWriterOptions struct {
 }
 
 // Make a new RotateWriter. Return nil if error occurs during setup.
-func NewRotateWriter(options RotateWriterOptions) *RotateWriter {
+func NewRotateWriter(options RotateWriterOptions) (*RotateWriter, error) {
 	w := &RotateWriter{
 		filename:      options.Filename,
 		directory:     options.Directory,
@@ -37,13 +37,18 @@ func NewRotateWriter(options RotateWriterOptions) *RotateWriter {
 	os.Mkdir(options.Directory, 0755)
 	err := w.rotate()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return w
+	return w, nil
 }
 
 func (w *RotateWriter) afterRotate() error {
-	return w.removeOldestFile()
+	err := w.removeOldestFile()
+	if err != nil {
+		log.Error("Error removing oldest file", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (w *RotateWriter) shouldRotate() bool {
@@ -56,17 +61,16 @@ func (w *RotateWriter) shouldRotate() bool {
 }
 
 func (w *RotateWriter) removeOldestFile() error {
+	log.Info("Removing oldest file")
 	// List all files in directory
 	files, err := os.ReadDir(w.directory)
-
-	if len(files) > w.maxFiles {
-		return nil
-	}
-
 	if err != nil {
 		return err
 	}
 
+	if len(files) < w.maxFiles {
+		return nil
+	}
 	// Find the oldest file
 	var oldestFile os.DirEntry
 	for _, file := range files {
@@ -90,18 +94,16 @@ func (w *RotateWriter) removeOldestFile() error {
 	}
 
 	// Remove the oldest file
-	return os.Remove(oldestFile.Name())
+	return os.Remove(w.directory + "/" + oldestFile.Name())
 }
 
 // Write satisfies the io.Writer interface.
 func (w *RotateWriter) Write(output []byte) (int, error) {
-	log.Println("Writing to log", string(output))
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	defer func() {
 		if w.shouldRotate() {
 			w.rotate()
-			w.afterRotate()
 		}
 	}()
 
@@ -110,6 +112,7 @@ func (w *RotateWriter) Write(output []byte) (int, error) {
 
 // Perform the actual act of rotating and reopening file.
 func (w *RotateWriter) rotate() (err error) {
+	defer w.afterRotate()
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
@@ -135,5 +138,10 @@ func (w *RotateWriter) rotate() (err error) {
 
 	// Create a file.
 	w.fp, err = os.Create(filePath)
+
 	return
+}
+
+func (w *RotateWriter) Close() {
+	w.fp.Close()
 }

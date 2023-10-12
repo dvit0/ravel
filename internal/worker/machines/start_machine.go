@@ -2,13 +2,12 @@ package machines
 
 import (
 	"errors"
-	"os"
 
 	"github.com/charmbracelet/log"
-	"github.com/containerd/console"
-	logger "github.com/valyentdev/ravel/internal/worker/logs"
+	"github.com/valyentdev/ravel/internal/worker/logsmanager"
 	"github.com/valyentdev/ravel/pkg/driver/proto"
 	"github.com/valyentdev/ravel/pkg/types"
+	"github.com/valyentdev/ravel/pkg/units"
 )
 
 func (machineManager *MachineManager) StartMachine(machineId string) error {
@@ -53,7 +52,7 @@ func (machineManager *MachineManager) StartMachine(machineId string) error {
 		return errors.New("error getting driver")
 	}
 
-	_, err = driver.StartVM(machineId, getVMConfig(machine))
+	vminfos, err := driver.StartVM(machineId, getVMConfig(machine))
 	if err != nil {
 		machineManager.store.UpdateRavelMachine(machineId, func(m *types.RavelMachine) {
 			m.Status = types.RavelMachineStatusError
@@ -65,45 +64,20 @@ func (machineManager *MachineManager) StartMachine(machineId string) error {
 		m.Status = types.RavelMachineStatusRunning
 	})
 
+	machineManager.startCollectingLogs(machineId, vminfos)
+
 	return nil
 }
 
-func startCollectingLogs(machineId string, infos *proto.StartVMResponse) {
-	path := infos.Serial
-	file, err := os.Open(path)
-	if err != nil {
-		log.Error("Error opening serial", "error", err)
-		return
-	}
-	defer file.Close()
+func (machineManager *MachineManager) startCollectingLogs(machineId string, infos *proto.StartVMResponse) {
 
-	cons, err := console.ConsoleFromFile(file)
-	if err != nil {
-		log.Error("Error getting console", "error", err)
-		return
-	}
-
-	logWriter := logger.NewRotateWriter(logger.RotateWriterOptions{
+	broadcaster := machineManager.LogsManager.NewLogBroadcaster(machineId, infos.Serial, logsmanager.RotateWriterOptions{
 		Filename:      "machine.log",
-		MaxSizeByFile: 1024,
-		MaxFiles:      3,
-		Directory:     "/tmp/ravel/" + machineId,
+		Directory:     "/var/log/ravel/machines/" + machineId,
+		MaxFiles:      5,
+		MaxSizeByFile: 1 * units.MB,
 	})
 
-	for {
-		log.Info("Reading from console")
-		data := make([]byte, 128)
-		n, err := cons.Read(data)
-		if err != nil {
-			log.Info("Stopping reading the logs for machine", "machineId", machineId)
-			return
-		}
+	go broadcaster.Start()
 
-		_, err = logWriter.Write(data[:n])
-		if err != nil {
-			log.Error("Error writing to log", "error", err)
-			return
-		}
-
-	}
 }

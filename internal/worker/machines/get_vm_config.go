@@ -9,7 +9,7 @@ import (
 func getVMConfig(ravelMachine *types.RavelMachine) driver.VMConfig {
 	return driver.VMConfig{
 		Kernel:     "./kernel/vmlinux-5.10",
-		KernelArgs: "ro console=ttyS0,115200n8 noapic reboot=k panicOD=1  pci=off nomodules init=/ravel/init",
+		KernelArgs: "ro console=ttyS0,115200n8 noapic reboot=k panicOD=1  pci=off nomodules init=/ravel/init quiet",
 		VcpuCount:  ravelMachine.Spec.Vcpus,
 		Memory:     ravelMachine.Spec.Memory,
 
