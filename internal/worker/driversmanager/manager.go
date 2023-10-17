@@ -1,7 +1,9 @@
 package driversmanager
 
 import (
+	"os"
 	"os/exec"
+	"path"
 
 	"github.com/charmbracelet/log"
 	"github.com/hashicorp/go-hclog"
@@ -105,7 +107,9 @@ func newDriverClient(driverName string, reattachConfig *plugin.ReattachConfig) *
 	if reattachConfig != nil {
 		clientConfig.Reattach = reattachConfig
 	} else {
-		clientConfig.Cmd = exec.Command("./bin/drivers/" + driverName)
+
+		driverPath := path.Clean(os.Getenv("DRIVERS_FOLDER") + "/" + driverName)
+		clientConfig.Cmd = exec.Command(driverPath)
 	}
 	client := plugin.NewClient(clientConfig)
 	return client

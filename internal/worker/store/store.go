@@ -33,7 +33,7 @@ func initializeBuckets(db *bolt.DB) error {
 }
 
 func NewStore() Store {
-	db, err := bolt.Open("worker.db", 0600, nil)
+	db, err := bolt.Open("/var/lib/ravel/worker.db", 0600, nil)
 
 	if err != nil {
 		log.Fatal(err)
